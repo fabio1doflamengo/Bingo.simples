@@ -1,0 +1,288 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+<meta charset="UTF-8">
+<title>Bingo Profissional v4</title>
+
+<style>
+body {
+  font-family: Arial, sans-serif;
+  background: white;
+  margin: 0;
+  display: flex;
+  justify-content: center;
+}
+
+/* Container geral */
+.container {
+  display: flex;
+  align-items: center;
+  margin-top: 20px;
+}
+
+/* BINGO lateral */
+.side-title {
+  font-size: 60px;
+  font-weight: bold;
+  margin-right: 20px;
+  line-height: 1.5;
+}
+
+/* Grade maior */
+.grid {
+  display: grid;
+  grid-template-columns: repeat(15, 1fr);
+  gap: 8px;
+  width: 90vw;
+  max-width: 1600px;
+}
+
+.cell {
+  border: 2px solid black;
+  padding: 18px;
+  font-size: 26px;
+  font-weight: bold;
+}
+
+.marked {
+  background: #1e66ff;
+  color: white;
+}
+
+/* Número gigante */
+.big {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: white;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  font-size: 400px;
+  font-weight: bold;
+  z-index: 10;
+}
+
+.hidden {
+  display: none;
+}
+
+/* Controles */
+.controls {
+  position: fixed;
+  bottom: 20px;
+  width: 100%;
+  display: flex;
+  justify-content: center;
+  gap: 20px;
+}
+
+input {
+  font-size: 24px;
+  padding: 10px;
+  width: 150px;
+  text-align: center;
+}
+
+button {
+  font-size: 20px;
+  padding: 10px 20px;
+}
+
+/* TEXTO CENTRAL */
+#modoBingo {
+  position: fixed;
+  bottom: 120px;
+  width: 100%;
+  text-align: center;
+  font-size: 70px;
+  font-weight: bold;
+}
+</style>
+</head>
+
+<body>
+
+<div class="container">
+  <div class="side-title">
+    B<br>I<br>N<br>G<br>O
+  </div>
+
+  <div id="grid" class="grid"></div>
+</div>
+
+<div id="modoBingo">BINGÃO</div>
+
+<div class="controls">
+  <button onclick="reset()">Resetar</button>
+  <input id="input" placeholder="Ex: 12" autofocus>
+</div>
+
+<div id="big" class="big hidden"></div>
+
+<script>
+const grid = document.getElementById("grid");
+const big = document.getElementById("big");
+const input = document.getElementById("input");
+
+let tempoDestaque = 6000;
+
+// Criar tabela
+function createGrid() {
+  let start = [1,16,31,46,61];
+  for(let col=0; col<5; col++){
+    for(let i=0; i<15; i++){
+      let num = start[col]+i;
+
+      let div = document.createElement("div");
+      div.className="cell";
+      div.id="n"+num;
+      div.innerText=num;
+
+      grid.appendChild(div);
+    }
+  }
+}
+createGrid();
+
+// Detectar letra automaticamente
+function getLetter(num){
+  if(num >=1 && num <=15) return "B";
+  if(num >=16 && num <=30) return "I";
+  if(num >=31 && num <=45) return "N";
+  if(num >=46 && num <=60) return "G";
+  if(num >=61 && num <=75) return "O";
+  return null;
+}
+
+// Digitação
+input.addEventListener("keydown", function(e){
+  if(e.key === "Enter"){
+    let numero = parseInt(input.value);
+
+    if(numero >=1 && numero <=75){
+      let letra = getLetter(numero);
+      marcar(numero, letra);
+    }
+
+    input.value="";
+  }
+});
+
+// Marcar
+function marcar(num, letra){
+  let cell = document.getElementById("n"+num);
+  if(cell){
+    cell.classList.add("marked");
+  }
+
+  big.innerHTML = letra + num;
+  big.classList.remove("hidden");
+
+  setTimeout(()=>{
+    big.classList.add("hidden");
+  }, tempoDestaque);
+}
+
+// Reset
+function reset(){
+  document.querySelectorAll(".cell").forEach(c=>c.classList.remove("marked"));
+}
+
+// manter foco
+document.addEventListener("click", ()=>{
+  input.focus();
+});
+
+// FULLSCREEN
+const controls = document.querySelector('.controls');
+
+const btnFull = document.createElement('button');
+btnFull.innerHTML = '⛶';
+
+btnFull.onclick = function () {
+  if (!document.fullscreenElement) {
+    document.documentElement.requestFullscreen();
+  } else {
+    document.exitFullscreen();
+  }
+};
+
+controls.appendChild(btnFull);
+
+// DUPLO CLIQUE
+document.querySelectorAll('.cell').forEach(cell => {
+  cell.addEventListener('dblclick', () => {
+    cell.classList.remove('marked');
+  });
+});
+
+// ===== MENU DROPDOWN =====
+const modo = document.getElementById("modoBingo");
+
+const btnMenu = document.createElement("button");
+btnMenu.innerText = "  •";
+controls.appendChild(btnMenu);
+
+const menu = document.createElement("div");
+menu.style.position = "absolute";
+menu.style.background = "white";
+menu.style.border = "1px solid #ccc";
+menu.style.display = "none";
+
+document.body.appendChild(menu);
+
+// ✅ AGORA COM "Nada"
+["Nada","BINGUINHO","BINGÃO","BINGO CORRIDO"].forEach(txt=>{
+  const item = document.createElement("div");
+  item.innerText = txt;
+  item.style.padding = "10px";
+  item.style.cursor = "pointer";
+
+  item.onclick = ()=>{
+    if(txt === "Nada"){
+      modo.innerText = "";
+    } else {
+      modo.innerText = txt;
+    }
+    menu.style.display = "none";
+  };
+
+  menu.appendChild(item);
+});
+
+btnMenu.onclick = (e)=>{
+  e.stopPropagation();
+  const rect = btnMenu.getBoundingClientRect();
+
+  menu.style.top = rect.top - 140 + "px";
+  menu.style.left = rect.left + "px";
+  menu.style.display = "block";
+};
+
+document.addEventListener("click", ()=>{
+  menu.style.display = "none";
+});
+
+// ===== RODAPÉ DIREITA =====
+const rodape = document.createElement("div");
+rodape.innerText = "Sistema Próprio e Produzido por: Manoel Santana e Fábio Augusto";
+
+rodape.style.position = "fixed";
+rodape.style.bottom = "20px";
+rodape.style.right = "20px";
+rodape.style.fontSize = "16px";
+rodape.style.fontWeight = "bold";
+rodape.style.background = "rgba(255,255,255,0.9)";
+rodape.style.padding = "6px 10px";
+rodape.style.borderRadius = "6px";
+rodape.style.boxShadow = "0 0 5px rgba(0,0,0,0.2)";
+rodape.style.zIndex = "5";
+
+document.body.appendChild(rodape);
+</script>
+
+</body>
+</html>
